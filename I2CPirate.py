@@ -29,11 +29,14 @@ m (to select what mode do you wanna use)
 
 import serial
 import time
+from time import gmtime
 
 ser = serial.Serial(
     port='COM8',
     baudrate=115200
 )
+
+index = 0 # index for reading the measurement index
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 read_humidity is a function to read the humidity with the Si7006 sensor
@@ -48,7 +51,7 @@ def read_humidity():
     ser.write(b"[0x80 0xf5][0x81 r][0x81 r][0x81 rr]\n\r")
     time.sleep(1)
     x = 0
-    while x <= 30:
+    while x <= 32:
         ser.flush()
         data = ser.readline(x).decode('utf-8')
         #print(decode)
@@ -79,11 +82,52 @@ def read_temperature():
         #print(data)
         x += 1
     return decode
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+read_temperature is a function to read the temperature with the Si7006 sensor
+The temperature read is from the previus Humidity conversion
+Author : Felipe Navarro
+Date   : 12/20/2015
+inputs : nothing
+return : humidity list
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         
             
 while 1:
-    print("UMIDADE")
-    print(read_humidity())
-    print("TEMPERATURA")
-    print(read_temperature())
-    time.sleep(30)
+    index += 1 #increment the measurement index
+    date = time.strftime("%d %b %Y %H:%M:%S", gmtime()) #date acquisition
+    
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    The following block of code calls a conversion in the Si7006 and slice the
+    data on the python
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""    
+    
+    humidity = read_humidity()
+    humidity_ack = humidity[290:293]
+    humidity1 = humidity[278:280] + humidity[296:298]#First call
+    humidity2 = humidity[271:273] + humidity[306:308]#all others
+        
+    temperature = read_temperature()
+    temperature_ack = temperature[164:167]
+    temperature = temperature[152:154] + temperature[170:172]
+    
+    try:
+        humidity = int(humidity2, 16)
+    except:
+        humidity = int(humidity1, 16)
+        
+    temperature = int(temperature, 16)
+        
+    humidity     = int(((humidity*125)/65536)-6)
+    temperature = int(((float(temperature)*171.12)/65536)-46.85 )
+    
+    
+    #print on the command line the humidity and temperature
+    print(index, date, "U", humidity, "T", temperature)
+    
+    file_data = str(index) + ',' + date + ',' + 'U' + ',' + str(humidity) + ',' + "T" + ',' + str(temperature) + '\n'
+    file = open("data.txt", "a")
+    file.write(file_data) 
+    
+    time.sleep(10)
+    
