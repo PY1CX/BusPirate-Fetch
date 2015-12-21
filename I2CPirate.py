@@ -84,12 +84,14 @@ def read_temperature():
     return decode
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-read_temperature is a function to read the temperature with the Si7006 sensor
-The temperature read is from the previus Humidity conversion
+__________________This is the main loop of the Software______________________
+Calls the read_humidity() and read_temperature functions, converts the value
+to decimal and after to current humidity and temperature values. 
 Author : Felipe Navarro
 Date   : 12/20/2015
 inputs : nothing
-return : humidity list
+output : write into data.txt and prints on command line the Humidity and Tem
+perature values.
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         
             
@@ -103,14 +105,18 @@ while 1:
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""    
     
     humidity = read_humidity()
+    #print(humidity) #debug code
     humidity_ack = humidity[290:293]
     humidity1 = humidity[278:280] + humidity[296:298]#First call
-    humidity2 = humidity[271:273] + humidity[306:308]#all others
-        
+    humidity2 = humidity[288:290] + humidity[306:308]#all others
+    #print(humidity1, " ", humidity2) #debug code    
     temperature = read_temperature()
     temperature_ack = temperature[164:167]
     temperature = temperature[152:154] + temperature[170:172]
     
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    The following block of code converts the data into readable content
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""     
     try:
         humidity = int(humidity2, 16)
     except:
@@ -125,9 +131,13 @@ while 1:
     #print on the command line the humidity and temperature
     print(index, date, "U", humidity, "T", temperature)
     
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    The following block of code writes the content into a txt file
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""  
     file_data = str(index) + ',' + date + ',' + 'U' + ',' + str(humidity) + ',' + "T" + ',' + str(temperature) + '\n'
     file = open("data.txt", "a")
     file.write(file_data) 
     
-    time.sleep(10)
+    time.sleep(5) #time between conversions
+    
     
